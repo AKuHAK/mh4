@@ -646,28 +646,39 @@ ui32 H4RFile::scan (char *szH4rFileName)
     // With the file name, we find the data type
     findDataType( numFile );
 
-    // Path
-    fread( m_pPathSize + numFile,sizeof( ui16 ),1,h4File );
-    if( m_pPathSize[numFile] > 0 )
-    {
-      fread( m_ppPath[numFile],sizeof( ui8 ),m_pPathSize[numFile],h4File );
-    }
-    m_ppPath[numFile][m_pPathSize[numFile]] = '\0';
-
     if( !specialCase )
     {
+	  // Path
+	  fread( m_pPathSize + numFile,sizeof( ui16 ),1,h4File );
+	  if( m_pPathSize[numFile] > 0 )
+	  {
+		fread( m_ppPath[numFile],sizeof( ui8 ),m_pPathSize[numFile],h4File );
+	  }
+	  m_ppPath[numFile][m_pPathSize[numFile]] = '\0';
+	  
       // Extra 1
       fread( m_pExtra1 + numFile,sizeof( ui16 ),1,h4File );
 
-      // Extra 2
+      // Extra 2 (Compression level)
       fread( m_pExtra2 + numFile,sizeof( ui32 ),1,h4File );
     }
     else
     {
       // Special case: we read another file name
-      ui16 length;
-      fread( &length,sizeof( ui16 ),1,h4File );
-      fseek( h4File,length + sizeof( ui32 ),SEEK_CUR );
+	  
+	  // Extra 1 (00 00)
+      fread( m_pExtra1 + numFile,sizeof( ui16 ),1,h4File );
+
+      // Path
+	  fread( m_pPathSize + numFile,sizeof( ui16 ),1,h4File );
+	  if( m_pPathSize[numFile] > 0 )
+	  {
+		fread( m_ppPath[numFile],sizeof( ui8 ),m_pPathSize[numFile],h4File );
+	  }
+	  m_ppPath[numFile][m_pPathSize[numFile]] = '\0';
+	  	  
+      // Extra 2 (Compression level)
+      fread( m_pExtra2 + numFile,sizeof( ui32 ),1,h4File );
     }
   }
 
