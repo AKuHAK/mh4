@@ -2,12 +2,13 @@
  * mh4
  * Heroes of Might and Magic IV Ressources Explorer and Modifier
  *
- * Author: Olivier Soares
+ * Author: AKUHAK and Olivier Soares
  * olivier@etranges-libellules.fr
  *
  */
 
 
+#include <qdatetime.h>
 #include <qapplication.h>
 #include <qworkspace.h>
 #include <qmenubar.h>
@@ -41,7 +42,7 @@ mh4Window::mh4Window (QWidget *parent,const char *name,WFlags f): QMainWindow( p
   setCaption( MH4_DESC );
 
   m_pView = new mh4widget( this );
-  m_pView->setMinimumSize( 640,480 );
+  m_pView->setMinimumSize( MIN_WIDTH,MIN_HEIGHT );
   setCentralWidget( m_pView );
 
   // File menu
@@ -228,7 +229,14 @@ mh4Window::mh4Window (QWidget *parent,const char *name,WFlags f): QMainWindow( p
   connect( action,SIGNAL( activated()),SLOT( selectDataType19()));
   action->addTo( selectionMenu );
 
-
+  selectionMenu->insertSeparator();
+  
+  // Select Pointer menu
+  action = new QAction( tr( "Select pointers" ),tr( "Select pointers" ),0,this );
+  connect( action,SIGNAL( activated()),SLOT( selectPointer()));
+  action->addTo( selectionMenu );  
+  
+  
   // **********
   // About menu
   // **********
@@ -304,8 +312,56 @@ void mh4Window::createSelection (void)
 
   m_pView->m_pListView->clear();
   m_pView->createListViewItem( nbFile );
-  QString info;
-
+  QString info, info3, info4;
+  QDateTime info2;
+  QDate dddate;
+  QTime tttime;
+  int iiiint, iint;
+  int *mas1 = new int[nbFile];
+  int *mas2 = new int[nbFile];
+  
+  for( ui32 numFilex=0;numFilex<nbFile;numFilex++ )
+  {
+	info.setNum( m_pH4RFile->m_pOffset[numFilex] );
+	mas1[numFilex] = info.toInt();
+	mas2[numFilex] = numFilex;
+  }
+  for( ui32 numFile1=0;numFile1<nbFile;numFile1++ )
+  {
+	for( ui32 numFile2=numFile1+1;numFile2<nbFile;numFile2++ )
+	{
+		if (mas1[numFile1] > mas1[numFile2])
+		{
+			iiiint = mas1[numFile1];
+			mas1[numFile1] = mas1[numFile2];
+			mas1[numFile2] = iiiint;
+			iiiint = mas2[numFile1];
+			mas2[numFile1] = mas2[numFile2];
+			mas2[numFile2] = iiiint;
+		}
+	}
+  }
+  //for( ui32 numFile3=0;numFile3<nbFile;numFile3++ )
+  //{
+//	iiiint = mas2[numFile3];
+//	mas1[iiiint] = numFile3;
+  //}
+  for( ui32 numFile4=0;numFile4<nbFile-1;numFile4++ )
+  {
+	iint = mas2[numFile4];
+	iiiint = mas2[numFile4+1];
+	info.setNum( m_pH4RFile->m_pOffset[iiiint] );
+	info3.setNum( m_pH4RFile->m_pOffset[iint] );
+	info4.setNum( m_pH4RFile->m_pSize[iint] );
+	mas1[iint] = info.toInt() - info3.toInt() - info4.toInt();
+	if (numFile4 == nbFile-2)
+	{
+		// info3.setNum( m_pH4RFile->m_pOffset[iiiint] );
+		// info4.setNum( m_pH4RFile->m_pSize[iiiint] );	
+		// mas1[iiiint] = 676966935 - info3.toInt() - info4.toInt();
+		mas1[iiiint] = 0;
+	}
+  }	
   for( ui32 numFile=0;numFile<nbFile;numFile++ )
   {
     m_pView->m_pListViewItem[numFile] = new QListViewItem( m_pView->m_pListView );
@@ -316,25 +372,97 @@ void mh4Window::createSelection (void)
 
     // File offset
     info.setNum( m_pH4RFile->m_pOffset[numFile] );
-    m_pView->m_pListViewItem[numFile]->setText( 1,info );
+    m_pView->m_pListViewItem[numFile]->setText( 1,info.rightJustify(11, ' ') );
 
-    // File size
+    // File size (zipped)
     info.setNum( m_pH4RFile->m_pSize[numFile] );
-    m_pView->m_pListViewItem[numFile]->setText( 2,info );
-
-    // File path
-    info = QString( m_pH4RFile->m_ppPath[numFile] );
+    m_pView->m_pListViewItem[numFile]->setText( 2,info.rightJustify(8, ' ') );
+		
+    // File point
+    info = QString( m_pH4RFile->m_ppPointer[numFile] );
     m_pView->m_pListViewItem[numFile]->setText( 3,info );
+
+    // File number
+    info.setNum(numFile );
+    m_pView->m_pListViewItem[numFile]->setText( 4,info.rightJustify(5, '0') );
 
     // File type
     info = QString( g_FileDataName[m_pH4RFile->m_pDataType[numFile]] );
-    m_pView->m_pListViewItem[numFile]->setText( 4,info );
+    m_pView->m_pListViewItem[numFile]->setText( 5,info );
 
-    // If the file size is 0, the file is not selectable
-    if( m_pH4RFile->m_pSize[numFile] == 0 )
-    {
-      m_pView->m_pListViewItem[numFile]->setSelectable( false );
-    }
+    // File date
+    info2.setTime_t( m_pH4RFile->m_pTime[numFile] );
+	dddate = info2.date();
+	iiiint = dddate.year();
+	info3 = info.setNum(iiiint) + '.';
+	iiiint = dddate.month();
+	if (iiiint < 10)
+	{
+		info3 +='0';
+	}
+	info3 += info.setNum(iiiint) + '.';
+	iiiint = dddate.day();
+	if (iiiint < 10)
+	{
+		info3 +='0';
+	}
+	info3 += info.setNum(iiiint) + ' ';
+	tttime = info2.time();
+	iiiint = tttime.hour();
+	if (iiiint < 10)
+	{
+		info3 +='0';
+	}
+	info3 += info.setNum(iiiint) + ':';
+	iiiint = tttime.minute();
+	if (iiiint < 10)
+	{
+		info3 +='0';
+	}
+	info3 += info.setNum(iiiint) + ':';
+	iiiint = tttime.second();
+	if (iiiint < 10)
+	{
+		info3 +='0';
+	}
+	info3 += info.setNum(iiiint);
+    m_pView->m_pListViewItem[numFile]->setText( 6,info3 );
+
+	// File path
+    info = QString( m_pH4RFile->m_ppPath[numFile] );
+    m_pView->m_pListViewItem[numFile]->setText( 7,info );
+
+	// File size (unzipped)
+    info.setNum( m_pH4RFile->m_pUnpSize[numFile] );
+    m_pView->m_pListViewItem[numFile]->setText( 8,info.rightJustify(8, ' ') );
+
+	// Gzip value
+	info3=info.setNum( m_pH4RFile->m_pCompr[numFile] );
+	info.setNum( m_pH4RFile->m_pCompr[numFile] );
+    if (info == "3")
+	{
+		info3="Yes";
+	}
+	if (info == "1")
+	{
+		info3="No";
+	}
+    m_pView->m_pListViewItem[numFile]->setText( 9,info3 );
+
+    info.setNum(mas1[numFile] );
+	if ( mas1[numFile] > 0)
+	{
+      m_pView->m_pListViewItem[numFile]->setText( 10,info.rightJustify(8, ' ') );
+	}
+	else
+	{
+	  m_pView->m_pListViewItem[numFile]->setText( 10,'\0');
+	}
+	//If the file size is 0, the file is not selectable
+    // if( m_pH4RFile->m_pSize[numFile] == 0 )
+    // {
+      // m_pView->m_pListViewItem[numFile]->setSelectable( false );
+    // }
 
     m_pView->m_pListView->insertItem( m_pView->m_pListViewItem[numFile] );
   }
@@ -392,6 +520,13 @@ void mh4Window::extractSelection (void)
     {
       nbFileToExtract++;
     }
+	// else
+	// {
+	  // if( m_pH4RFile->m_pSize[i] == 0 )
+	  // {
+		// nbFileToExtract++;
+      // }
+	// }
   }
 
   // Nothing is selected
@@ -440,12 +575,28 @@ void mh4Window::extractSelection (void)
   {
     if( m_pH4RFile->extract( srcFile,numFile,dirName,extractedFileName ))
     {
-      getFileName( extractedFileName );
-      fprintf( lstFile,"%s\n",extractedFileName );
-      nbExtractedFile++;
-      pProgressBar->setProgress( nbExtractedFile );
+	  if ( m_pH4RFile->m_pSize[numFile] == 0 )
+		{
+		  fprintf( lstFile,"%s%c",m_pH4RFile->m_ppName[numFile], '|');
+		  fprintf( lstFile,"%s\n",m_pH4RFile->m_ppPointer[numFile] );
+		}
+	  else
+		{
+		  getFileName( extractedFileName );
+		  fprintf( lstFile,"%s\n",extractedFileName );
+		}
+		nbExtractedFile++;
+		pProgressBar->setProgress( nbExtractedFile );
     }
 
+	// if ( m_pH4RFile->m_pSize[numFile] == 0 )
+	// {
+	  // fprintf( lstFile,"%s%c",m_pH4RFile->m_ppName[numFile], '|');
+	  // fprintf( lstFile,"%s\n",m_pH4RFile->m_ppPath[numFile] );
+	  // nbExtractedFile++;
+	  // pProgressBar->setProgress( nbExtractedFile );
+	// }
+	
     if( pProgressBar->wasCancelled())
     {
       QMessageBox::warning( this,"File not build","The build has been stopped by the user !" );
@@ -603,6 +754,7 @@ void mh4Window::build (void)
 
   fclose( h4rBuildFile );
 
+  // QMessageBox::information( this,"File build","The file was build !" );
   QMessageBox::information( this,"File build","The file was build !" );
 }
 
@@ -628,6 +780,35 @@ void mh4Window::selectAll (void)
   for( ui32 numFile=0;numFile<m_pH4RFile->m_NbFile;numFile++ )
   {
     m_pView->m_pListView->setSelected( m_pView->m_pListViewItem[numFile],true );
+  }
+}
+
+
+
+// ------------------------------------------------------------------------------------------
+// mh4Window::selectAll
+// ------------------------------------------------------------------------------------------
+// Description:
+//    Select all files.
+// ------------------------------------------------------------------------------------------
+// In:
+//
+// Out:
+//
+// ------------------------------------------------------------------------------------------
+void mh4Window::selectPointer (void)
+{
+  if( !m_pH4RFile )
+  {
+    return;
+  }
+
+  for( ui32 numFile=0;numFile<m_pH4RFile->m_NbFile;numFile++ )
+  {
+	if (m_pH4RFile->m_pSize[numFile] == 0 )
+	  {
+		m_pView->m_pListView->setSelected( m_pView->m_pListViewItem[numFile],true );
+	  }
   }
 }
 
@@ -1065,5 +1246,5 @@ void mh4Window::selectDataType19 (void)
 // ------------------------------------------------------------------------------------------
 void mh4Window::about (void)
 {
-  QMessageBox::information( this,"About","Heroes of Might and Magic IV Ressources Explorer and Modifier\nBy Olivier Soares\nolivier@etranges-libellules.fr" );
+  QMessageBox::information( this,"About","Heroes of Might and Magic IV Ressources Explorer and Modifier\nBy AKUHAK and Olivier Soares\nolivier@etranges-libellules.fr\n\nRemake  by AKuHAK\nakuhak@gmail.com" );
 }

@@ -1,7 +1,7 @@
 /****************************************************************************
 ** mh4Window meta object code from reading C++ file 'mh4window.h'
 **
-** Created: Sun Oct 20 19:32:22 2002
+** Created: Sun Apr 29 13:43:17 2018
 **      by: The Qt MOC ($Id: //depot/qt/main/src/moc/moc.y#178 $)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -85,6 +85,7 @@ QMetaObject* mh4Window::staticMetaObject()
     typedef void(mh4Window::*m1_t27)();
     typedef void(mh4Window::*m1_t28)();
     typedef void(mh4Window::*m1_t29)();
+    typedef void(mh4Window::*m1_t30)();
     m1_t0 v1_0 = Q_AMPERSAND mh4Window::createSelection;
     m1_t1 v1_1 = Q_AMPERSAND mh4Window::deleteSelection;
     m1_t2 v1_2 = Q_AMPERSAND mh4Window::extractSelection;
@@ -114,9 +115,10 @@ QMetaObject* mh4Window::staticMetaObject()
     m1_t26 v1_26 = Q_AMPERSAND mh4Window::selectDataType17;
     m1_t27 v1_27 = Q_AMPERSAND mh4Window::selectDataType18;
     m1_t28 v1_28 = Q_AMPERSAND mh4Window::selectDataType19;
-    m1_t29 v1_29 = Q_AMPERSAND mh4Window::about;
-    QMetaData *slot_tbl = QMetaObject::new_metadata(30);
-    QMetaData::Access *slot_tbl_access = QMetaObject::new_metaaccess(30);
+    m1_t29 v1_29 = Q_AMPERSAND mh4Window::selectPointer;
+    m1_t30 v1_30 = Q_AMPERSAND mh4Window::about;
+    QMetaData *slot_tbl = QMetaObject::new_metadata(31);
+    QMetaData::Access *slot_tbl_access = QMetaObject::new_metaaccess(31);
     slot_tbl[0].name = "createSelection()";
     slot_tbl[0].ptr = *((QMember*)&v1_0);
     slot_tbl_access[0] = QMetaData::Protected;
@@ -204,12 +206,15 @@ QMetaObject* mh4Window::staticMetaObject()
     slot_tbl[28].name = "selectDataType19()";
     slot_tbl[28].ptr = *((QMember*)&v1_28);
     slot_tbl_access[28] = QMetaData::Protected;
-    slot_tbl[29].name = "about()";
+    slot_tbl[29].name = "selectPointer()";
     slot_tbl[29].ptr = *((QMember*)&v1_29);
     slot_tbl_access[29] = QMetaData::Protected;
+    slot_tbl[30].name = "about()";
+    slot_tbl[30].ptr = *((QMember*)&v1_30);
+    slot_tbl_access[30] = QMetaData::Protected;
     metaObj = QMetaObject::new_metaobject(
 	"mh4Window", "QMainWindow",
-	slot_tbl, 30,
+	slot_tbl, 31,
 	0, 0,
 #ifndef QT_NO_PROPERTIES
 	0, 0,

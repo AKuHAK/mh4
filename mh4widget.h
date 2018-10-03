@@ -2,7 +2,7 @@
  * mh4
  * Heroes of Might and Magic IV Ressources Explorer and Modifier
  *
- * Author: Olivier Soares
+ * Author: AKUHAK and Olivier Soares
  * olivier@etranges-libellules.fr
  *
  */

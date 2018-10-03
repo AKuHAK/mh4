@@ -2,7 +2,7 @@
  * mh4
  * Heroes of Might and Magic IV Ressources Explorer and Modifier
  *
- * Author: Olivier Soares
+ * Author: AKUHAK and Olivier Soares
  * olivier@etranges-libellules.fr
  *
  */
@@ -17,8 +17,8 @@
 
 
 // Window min size
-#define MIN_WIDTH  640
-#define MIN_HEIGHT 480
+#define MIN_WIDTH  320
+#define MIN_HEIGHT 240
 
 
 class mh4widget;
@@ -72,6 +72,7 @@ class mh4Window: public QMainWindow
     void selectDataType17 (void);
     void selectDataType18 (void);
     void selectDataType19 (void);
+	void selectPointer (void);
 
     // About menu functions
     void about (void);

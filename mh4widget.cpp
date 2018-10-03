@@ -2,7 +2,7 @@
  * mh4
  * Heroes of Might and Magic IV Ressources Explorer and Modifier
  *
- * Author: Olivier Soares
+ * Author: AKUHAK and Olivier Soares
  * olivier@etranges-libellules.fr
  *
  */
@@ -33,13 +33,19 @@ mh4widget::mh4widget (QWidget *parent,const char *name): QWidget( parent, name )
   m_pMainGrid = new QGridLayout( this );
 
   m_pListView = new QListView( this );
-  // The 5 columns
+  // The 9 columns
   m_pListView->addColumn( "Name" );
   m_pListView->addColumn( "Offset" );
   m_pListView->addColumn( "Size" );
+  m_pListView->addColumn( "Pointer name" );
+  m_pListView->addColumn( "Nr" );
+  m_pListView->addColumn( "Type" );  
+  m_pListView->addColumn( "Date" );
   m_pListView->addColumn( "Path" );
-  m_pListView->addColumn( "Type" );
-
+  m_pListView->addColumn( "Unpacked size" );
+  m_pListView->addColumn( "Compression" );
+  m_pListView->addColumn( "Debug size" );
+	
   m_pListView->setSelectionMode( QListView::Extended );
 
   m_pMainGrid->addWidget( m_pListView,0,0 );

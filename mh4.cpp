@@ -2,16 +2,17 @@
  * mh4
  * Heroes of Might and Magic IV Ressources Explorer and Modifier
  *
- * Author: Olivier Soares
+ * Author: AKUHAK and Olivier Soares
  * olivier@etranges-libellules.fr
  *
  */
 
-
+#include <windows.h>
+#include <stdlib.h>
 #include <malloc.h>
 #include <memory.h>
 #include <string.h>
-#include <zlib.h>
+#include "zlib.h"
 #include "mh4.h"
 
 
@@ -435,7 +436,7 @@ void H4RFile::create (ui32 nbFile)
   // Number of file
   m_NbFile = nbFile;
 
-  // Offset
+  // Extract?
   m_pToExtract = new bool[m_NbFile];
   memset( m_pToExtract,false,m_NbFile * sizeof( bool ));
 
@@ -447,43 +448,48 @@ void H4RFile::create (ui32 nbFile)
   m_pSize = new ui32[m_NbFile];
   memset( m_pSize,0,m_NbFile * sizeof( ui32 ));
 
+  // Unpacked size
+  m_pUnpSize = new ui32[m_NbFile];
+  memset( m_pUnpSize,0,m_NbFile * sizeof( ui32 ));
+
+  // Date time
+  m_pTime = new ui32[m_NbFile];
+  memset( m_pTime,0,m_NbFile * sizeof( ui32 ));
+
   // File type
   m_pDataType = new ui32[m_NbFile];
   memset( m_pDataType,0,m_NbFile * sizeof( ui32 ));
 
-  // File and path size
+  // File and path and pointer size
   m_pNameSize = new ui16[m_NbFile];
   memset( m_pNameSize,0,m_NbFile * sizeof( ui16 ));
 
   m_pPathSize = new ui16[m_NbFile];
   memset( m_pPathSize,0,m_NbFile * sizeof( ui16 ));
 
-  /// File name and path
+  m_pPointerSize = new ui16[m_NbFile];
+  memset( m_pPointerSize,0,m_NbFile * sizeof( ui16 ));
+
+  // File name and path and pointer
   m_ppName = new char*[m_NbFile];
   m_ppPath = new char*[m_NbFile];
+  m_ppPointer = new char*[m_NbFile];
 
   ui32 i;
   for( i=0;i<m_NbFile;i++ )
   {
     m_ppName[i] = new char[MAX_FILENAME_LENGTH];
     m_ppPath[i] = new char[MAX_FILENAME_LENGTH];
+    m_ppPointer[i] = new char[MAX_FILENAME_LENGTH];
   }
 
-  // Pre 1
-  m_pPre1 = new ui32[m_NbFile];
-  memset( m_pPre1,0,m_NbFile * sizeof( ui32 ));
+  // Extra  (00 00)
+  // m_pExtra1 = new ui16[m_NbFile];
+  // memset( m_pExtra1,0,m_NbFile * sizeof( ui16 ));
 
-  // Pre 2
-  m_pPre2 = new ui32[m_NbFile];
-  memset( m_pPre2,0,m_NbFile * sizeof( ui32 ));
-
-  // Extra 1
-  m_pExtra1 = new ui16[m_NbFile];
-  memset( m_pExtra1,0,m_NbFile * sizeof( ui16 ));
-
-  // Extra 2
-  m_pExtra2 = new ui32[m_NbFile];
-  memset( m_pExtra2,0,m_NbFile * sizeof( ui32 ));
+  // Compression level
+  m_pCompr = new ui32[m_NbFile];
+  memset( m_pCompr,0,m_NbFile * sizeof( ui32 ));
 }
 
 
@@ -516,13 +522,15 @@ void H4RFile::destroy (void)
   {
     delete[] m_ppName[i];
     delete[] m_ppPath[i];
+    delete[] m_ppPointer[i];
   }
   delete[] m_ppName;
   delete[] m_ppPath;
-  delete[] m_pPre1;
-  delete[] m_pPre2;
-  delete[] m_pExtra1;
-  delete[] m_pExtra2;
+  delete[] m_ppPointer;
+  delete[] m_pUnpSize;
+  delete[] m_pTime;
+  // delete[] m_pExtra1;
+  delete[] m_pCompr;
 
   m_NbFile = 0;
 }
@@ -622,18 +630,18 @@ ui32 H4RFile::scan (char *szH4rFileName)
   {
     // Offset
     fread( m_pOffset + numFile,sizeof( ui32 ),1,h4File );
-
+	
     // Size
     fread( m_pSize + numFile,sizeof( ui32 ),1,h4File );
 
-    // Special case ?
+    // Special case ? (pointer 00 00 00 00   00 00 00 00)
     specialCase = ((m_pOffset[numFile] == 0) && (m_pSize[numFile] == 0));
 
-    // Pre 1
-    fread( m_pPre1 + numFile,sizeof( ui32 ),1,h4File );
+    // Compressed size
+    fread( m_pUnpSize + numFile,sizeof( ui32 ),1,h4File );
 
-    // Pre 2
-    fread( m_pPre2 + numFile,sizeof( ui32 ),1,h4File );
+    // Date $ time
+    fread( m_pTime + numFile,sizeof( ui32 ),1,h4File );
 
     // Name
     fread( m_pNameSize + numFile,sizeof( ui16 ),1,h4File );
@@ -642,44 +650,65 @@ ui32 H4RFile::scan (char *szH4rFileName)
       fread( m_ppName[numFile],sizeof( ui8 ),m_pNameSize[numFile],h4File );
     }
     m_ppName[numFile][m_pNameSize[numFile]] = '\0';
-
+	  
     // With the file name, we find the data type
     findDataType( numFile );
 
-    if( !specialCase )
-    {
-	  // Path
-	  fread( m_pPathSize + numFile,sizeof( ui16 ),1,h4File );
-	  if( m_pPathSize[numFile] > 0 )
-	  {
+	fread( m_pPathSize + numFile,sizeof( ui16 ),1,h4File );
+	if( m_pPathSize[numFile] > 0 )
+	{
 		fread( m_ppPath[numFile],sizeof( ui8 ),m_pPathSize[numFile],h4File );
-	  }
-	  m_ppPath[numFile][m_pPathSize[numFile]] = '\0';
-	  
-      // Extra 1
-      fread( m_pExtra1 + numFile,sizeof( ui16 ),1,h4File );
+	}
+	m_ppPath[numFile][m_pPathSize[numFile]] = '\0';
+	
+	fread( m_pPointerSize + numFile,sizeof( ui16 ),1,h4File );
+	if( m_pPointerSize[numFile] > 0 )
+	{
+		fread( m_ppPointer[numFile],sizeof( ui8 ),m_pPointerSize[numFile],h4File );
+	}
+	m_ppPointer[numFile][m_pPointerSize[numFile]] = '\0';
 
-      // Extra 2 (Compression level)
-      fread( m_pExtra2 + numFile,sizeof( ui32 ),1,h4File );
-    }
-    else
-    {
-      // Special case: we read another file name
+	fread( m_pCompr + numFile,sizeof( ui32 ),1,h4File );
+	
+	// if( !specialCase )
+    // {
+	  // // Path (or pointer name)
+	  // fread( m_pPathSize + numFile,sizeof( ui16 ),1,h4File );
+	  // if( m_pPathSize[numFile] > 0 )
+	  // {
+		// fread( m_ppPath[numFile],sizeof( ui8 ),m_pPathSize[numFile],h4File );
+	  // }
+	  // m_ppPath[numFile][m_pPathSize[numFile]] = '\0';
 	  
-	  // Extra 1 (00 00)
-      fread( m_pExtra1 + numFile,sizeof( ui16 ),1,h4File );
+      // // Extra 1 (always 00)
+      // fread( m_pExtra1 + numFile,sizeof( ui16 ),1,h4File );
 
-      // Path
-	  fread( m_pPathSize + numFile,sizeof( ui16 ),1,h4File );
-	  if( m_pPathSize[numFile] > 0 )
-	  {
-		fread( m_ppPath[numFile],sizeof( ui8 ),m_pPathSize[numFile],h4File );
-	  }
-	  m_ppPath[numFile][m_pPathSize[numFile]] = '\0';
-	  	  
-      // Extra 2 (Compression level)
-      fread( m_pExtra2 + numFile,sizeof( ui32 ),1,h4File );
-    }
+      // // Extra 2 (03 - gzipped, 00 - not gzip)
+      // fread( m_pCompr + numFile,sizeof( ui32 ),1,h4File );
+    // }
+    // else
+    // {
+	  // // Special case: we read pointer
+	  
+      // // Extra 1 (00 00)
+      // fread( m_pExtra1 + numFile,sizeof( ui16 ),1,h4File );
+	  
+	  // // Pointer name (or path)
+	  // fread( m_pPathSize + numFile,sizeof( ui16 ),1,h4File );
+	  // if( m_pPathSize[numFile] > 0 )
+	  // {
+		// fread( m_ppPath[numFile],sizeof( ui8 ),m_pPathSize[numFile],h4File );
+	  // }
+	  // m_ppPath[numFile][m_pPathSize[numFile]] = '\0';
+	  
+	  // // Extra 2 (Compression level)
+      // fread( m_pCompr + numFile,sizeof( ui32 ),1,h4File );
+    
+      // // Special case: we read another file name
+      // //ui16 length;
+     // // fread( &length,sizeof( ui16 ),1,h4File );
+    // //  fseek( h4File,length + sizeof( ui32 ),SEEK_CUR );
+    // }
   }
 
   fclose( h4File );
@@ -742,13 +771,19 @@ ui32 H4RFile::checkFileToExtract (ui32 *pDataTypeToExtract)
 // ------------------------------------------------------------------------------------------
 bool H4RFile::extract (FILE *srcFile,ui32 numFile,char *szDirName,char *szExtractedFileName)
 {
-  if( !srcFile || numFile >= m_NbFile || m_pSize[numFile] == 0 || !m_pToExtract[numFile] )
+  //if( !srcFile || numFile >= m_NbFile || m_pSize[numFile] == 0 || !m_pToExtract[numFile] )
+  if( !srcFile || numFile >= m_NbFile || !m_pToExtract[numFile] )
   {
     return false;
   }
-
-  // Extracted file name
-  strcpy( szExtractedFileName,szDirName );
+  // 0size
+  if ( m_pSize[numFile] == 0 )
+  {
+	return true;
+  }
+	//char *we2;
+  // Extracted file name;
+  strcpy( szExtractedFileName,szDirName);
   strcat( szExtractedFileName,m_ppName[numFile] );
 
   // We remove the suffix ".h4d"
@@ -756,16 +791,15 @@ bool H4RFile::extract (FILE *srcFile,ui32 numFile,char *szDirName,char *szExtrac
 
   // Bink files are not zipped
   bool bUnzip;
-  if( m_pDataType[numFile] == H4R_BINK )
+  if( m_pCompr[numFile] == 1 )
   {
-    strcat( szExtractedFileName,g_FileDataSuffix[m_pDataType[numFile]] );
-    bUnzip = false;
+	strcat( szExtractedFileName,g_FileDataSuffix[m_pDataType[numFile]] );
+	bUnzip = false;
   }
   else
   {
-    bUnzip = true;
+	bUnzip = true;
   }
-
   FILE *destFile;
   destFile = fopen( szExtractedFileName,"wb" );
   // Impossible to open the file ?
@@ -798,9 +832,28 @@ bool H4RFile::extract (FILE *srcFile,ui32 numFile,char *szDirName,char *szExtrac
 
     countSize += bufferSize;
   }
-
+  
+  BOOL f;
+      FILETIME ft;
+    SYSTEMTIME stLocal;
+	stLocal.wMonth=2;
+	stLocal.wDay=3;
+	stLocal.wYear=1980;
+	
+        stLocal.wHour=10;
+		stLocal.wMinute=9;
+		
+		SystemTimeToFileTime(&stLocal, &ft);
+  f = SetFileTime(destFile,           // Sets last-write time of the file 
+        &ft,           // to the converted current system time 
+        &ft, 
+        &ft); 
+	printf("Settime %02d",f);
   fclose( destFile );
-
+if( !f )
+  {
+    return false;
+  }
   // For unzipped files, we stop here
   if( !bUnzip )
   {
@@ -812,17 +865,8 @@ bool H4RFile::extract (FILE *srcFile,ui32 numFile,char *szDirName,char *szExtrac
   // Add suffix
   strcat( szExtractedFileName,g_FileDataSuffix[m_pDataType[numFile]] );
 
-  if( m_pDataType[numFile] == H4R_GAME_MAPS )
-  {
-    // For this file type, we have to delete the first 16 bytes of the h4d file
-    unzipFile( szH4dFileName,szExtractedFileName,16 );
-  }
-  else
-  {
-    // Unzip the file
-    unzipFile( szH4dFileName,szExtractedFileName,0 );
-  }
-
+  unzipFile( szH4dFileName,szExtractedFileName,0 );
+  
   // Delete the h4d file
   unlink( szH4dFileName );
 
@@ -868,7 +912,7 @@ bool H4RFile::dump (char *szDirName)
 
   for( ui32 numFile=0;numFile<m_NbFile;numFile++ )
   {
-    fprintf( dumpFile,"[File %d]\nName=%s\nPath=%s\nType=%s\nOffset=%d\nSize=%d\nPre1=%d\nPre2=%d\nExtra1=%d\nExtra2=%d\n\n",numFile+1,m_ppName[numFile],m_ppPath[numFile],g_FileDataName[m_pDataType[numFile]],m_pOffset[numFile],m_pSize[numFile],m_pPre1[numFile],m_pPre2[numFile],m_pExtra1[numFile],m_pExtra2[numFile] );
+    fprintf( dumpFile,"[File %d]\nName=%s\nPath=%s\nType=%s\nOffset=%d\nSize=%d\nUnpacked=%d\nDate=%d\nPointer=%d\nCompression=%d\n\n",numFile+1,m_ppName[numFile],m_ppPath[numFile],g_FileDataName[m_pDataType[numFile]],m_pOffset[numFile],m_pSize[numFile],m_pUnpSize[numFile],m_pTime[numFile],m_ppPointer[numFile],m_pCompr[numFile] );
   }
 
   fprintf( dumpFile,"\n[End]" );
@@ -952,6 +996,7 @@ FILE *H4RFile::scanList (char *szLstFileName,char *szDirName,ui32 *tableSize)
 // Out:
 //    h4r file (with the file pointer just after the header)
 // ------------------------------------------------------------------------------------------
+
 bool H4RFile::scanBuild (FILE *lstFile,ui32 numFile,char *szDirName,ui32 *tableSize)
 {
   if( !lstFile || feof( lstFile ) || numFile >= m_NbFile )
@@ -960,16 +1005,18 @@ bool H4RFile::scanBuild (FILE *lstFile,ui32 numFile,char *szDirName,ui32 *tableS
   }
 
   char fileName[MAX_FILENAME_LENGTH],temp1[MAX_FILENAME_LENGTH],temp2[MAX_FILENAME_LENGTH];
-
+  char temp3[MAX_FILENAME_LENGTH];
+  //char *temp5 = new char[MAX_FILENAME_LENGTH];
   // Read file name
   fgets( fileName,MAX_FILENAME_LENGTH,lstFile );
-  ui32 length = strlen( fileName );
+  ui32 length = strlen( fileName ), bpoint = 0, ii=0;
+  // m_pExtra1[numFile] = 0;
   // Remove the '\n'
   if( length > 0 && fileName[length - 1] == '\n' )
   {
     fileName[length - 1] = '\0';
   }
-
+  
   // This is the end ...
   if( !strcmp( fileName,"[End]" ))
   {
@@ -977,54 +1024,89 @@ bool H4RFile::scanBuild (FILE *lstFile,ui32 numFile,char *szDirName,ui32 *tableS
     return true;
   }
 
+  //strtok - cut into delimeters
+  //fileName|temp3
+  //m_ppName|m_ppPath
+  while ((bpoint == 0) && (ii < length-1))
+  {
+	if (fileName[ii] == '|')
+	{
+		bpoint = ii+1;
+	}
+	ii++;
+  }
+  for (ii=0;ii<length-bpoint-1;ii++)
+  {
+	temp3[ii] = fileName[ii+bpoint];
+  }
+  temp3[length-bpoint-1] = '\0';
+  if (bpoint == 0)
+  {
+	temp3[0] = '\0';
+  }
+  else
+  {
+	fileName[bpoint-1] = '\0';
+  }
+  
   strcpy( m_ppName[numFile],fileName );
+  getFileName( m_ppName[numFile] );
   removeFileNameSuffix( m_ppName[numFile] );
   strcat( m_ppName[numFile],".h4d" );
   m_pNameSize[numFile] = strlen( m_ppName[numFile] );
 
   findDataType( numFile );
 
-  // No path
+  // We add the path
   m_ppPath[numFile][0]  = '\0';
   m_pPathSize[numFile] = 0;
-
-  // We add the path
-  strcpy( temp1,szDirName );
-  strcat( temp1,fileName );
-  strcpy( temp2,szDirName );
-  strcat( temp2,m_ppName[numFile] );
-
-  bool bZip = (m_pDataType[numFile] != H4R_BINK);
-
-  if( bZip )
+	
+  if (bpoint == 0)
   {
-    // We zip the file
-    if( m_pDataType[numFile] == H4R_GAME_MAPS )
-    {
-      // Special case: we add 16 byte
-      m_pSize[numFile] = zipFile( temp1,temp2,16 );
-    }
-    else
-    {
-      m_pSize[numFile] = zipFile( temp1,temp2,0 );
-    }
+	m_ppPointer[numFile][0]  = '\0';
+	m_pPointerSize[numFile] = 0;
+
+	strcpy( temp1,szDirName );
+	strcat( temp1,fileName );
+	strcpy( temp2,szDirName );
+	strcat( temp2,m_ppName[numFile] );
+	// bool bZip = ((m_pDataType[numFile] != H4R_BINK) && (m_pDataType[numFile] != H4R_GAME_MAPS));
+	bool bZip = (m_pDataType[numFile] != H4R_BINK);
+	m_pUnpSize[numFile] = getFileSize(temp1);
+	if( bZip )
+	{
+		// We zip the file
+		m_pCompr[numFile] = 3;
+		m_pSize[numFile] = zipFile( temp1,temp2,0 );
+		// m_pSize[numFile] = copyFile( temp1,temp2 );
+	}
+	else
+	{
+		m_pCompr[numFile] = 1;
+		m_pSize[numFile] = copyFile( temp1,temp2 );
+	}
   }
   else
   {
-    m_pSize[numFile] = copyFile( temp1,temp2 );
+	strcpy( m_ppPointer[numFile],temp3);
+	removeFileNameSuffix( m_ppPointer[numFile] );
+	strcat( m_ppPointer[numFile],".h4d" );
+	m_pPointerSize[numFile] = strlen( m_ppPointer[numFile] );
+	m_pCompr[numFile] = 3;
+	m_pSize[numFile] = 0;
   }
-
+	  //offset
   if( numFile == 0 )
   {
-    m_pOffset[numFile] = 0;
+	m_pOffset[numFile] = 0;
   }
   else
   {
-    m_pOffset[numFile] = m_pOffset[numFile - 1] + m_pSize[numFile - 1];
+	m_pOffset[numFile] = m_pOffset[numFile - 1] + m_pSize[numFile - 1];
   }
-
-  *tableSize += 26 + m_pNameSize[numFile] + m_pPathSize[numFile];
-
+  
+  *tableSize += 26 + m_pNameSize[numFile] + m_pPathSize[numFile] + m_pPointerSize[numFile];
+    
   return true;
 }
 
@@ -1063,22 +1145,49 @@ FILE *H4RFile::headerBuild (int tableSize)
   for( ui32 numFile=0;numFile<m_NbFile;numFile++ )
   {
     // Add the table size to the offset
-    m_pOffset[numFile] += tableSize;
+	m_pOffset[numFile] += tableSize;
+	if (m_pSize[numFile] == 0)
+	{
+		m_pOffset[numFile] = 0;
+	}	
 
     fwrite( m_pOffset + numFile,sizeof( ui32 ),1,h4rFile );
+    // if (m_pSize[numFile] == 0)
+	// {
+		// fwrite( 0 ,sizeof( ui32 ),1,h4rFile );
+	// }
+	// else
+	// {
+		// fwrite( m_pOffset + numFile,sizeof( ui32 ),1,h4rFile );
+	// }
+    
     fwrite( m_pSize + numFile,sizeof( ui32 ),1,h4rFile );
 
-    fwrite( m_pPre1 + numFile,sizeof( ui32 ),1,h4rFile );
-    fwrite( m_pPre2 + numFile,sizeof( ui32 ),1,h4rFile );
+    fwrite( m_pUnpSize + numFile,sizeof( ui32 ),1,h4rFile );
+    fwrite( m_pTime + numFile,sizeof( ui32 ),1,h4rFile );
 
     fwrite( m_pNameSize + numFile,sizeof( ui16 ),1,h4rFile );
     fwrite( m_ppName[numFile],sizeof( char ),m_pNameSize[numFile],h4rFile );
 
-    fwrite( m_pPathSize + numFile,sizeof( ui16 ),1,h4rFile );
-    fwrite( m_ppPath[numFile],sizeof( char ),m_pPathSize[numFile],h4rFile );
-
-    fwrite( m_pExtra1 + numFile,sizeof( ui16 ),1,h4rFile );
-    fwrite( m_pExtra2 + numFile,sizeof( ui32 ),1,h4rFile );
+	fwrite( m_pPathSize + numFile,sizeof( ui16 ),1,h4rFile );
+	fwrite( m_ppPath[numFile],sizeof( char ),m_pPathSize[numFile],h4rFile );
+	
+	fwrite( m_pPointerSize + numFile,sizeof( ui16 ),1,h4rFile );
+	fwrite( m_ppPointer[numFile],sizeof( char ),m_pPointerSize[numFile],h4rFile );
+	
+	// if (m_pSize[numFile] == 0)
+	// {
+		// fwrite( m_pExtra1 + numFile,sizeof( ui16 ),1,h4rFile );
+		// fwrite( m_pPathSize + numFile,sizeof( ui16 ),1,h4rFile );
+		// fwrite( m_ppPath[numFile],sizeof( char ),m_pPathSize[numFile],h4rFile );
+	// }
+	// else
+	// {
+		// fwrite( m_pPathSize + numFile,sizeof( ui16 ),1,h4rFile );
+		// fwrite( m_ppPath[numFile],sizeof( char ),m_pPathSize[numFile],h4rFile );
+		// fwrite( m_pExtra1 + numFile,sizeof( ui16 ),1,h4rFile );
+	// }
+    fwrite( m_pCompr + numFile,sizeof( ui32 ),1,h4rFile );
   }
 
   return h4rFile;
@@ -1105,7 +1214,10 @@ bool H4RFile::dataBuild (FILE *h4rFile,ui32 numFile,char *szDirName)
   {
     return false;
   }
-
+  if (m_pSize[numFile] == 0)
+  {
+	return true;
+  }
   // Our buffer
   ui8 buffer[BUFFER_SIZE];
 
@@ -1119,6 +1231,7 @@ bool H4RFile::dataBuild (FILE *h4rFile,ui32 numFile,char *szDirName)
   // Impossible to open the file ?
   if( !h4dFile )
   {
+    unlink( fileName );
     return false;
   }
 

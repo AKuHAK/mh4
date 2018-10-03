@@ -2,7 +2,7 @@
  * mh4
  * Heroes of Might and Magic IV Ressources Explorer and Modifier
  *
- * Author: Olivier Soares
+ * Author: AKUHAK and Olivier Soares
  * olivier@etranges-libellules.fr
  *
  */
@@ -15,7 +15,7 @@
 #include <stdio.h>
 
 
-#define MH4_DESC "mh4 v0.06"
+#define MH4_DESC "mh4 v0.98"
 
 
 #ifndef ui8
@@ -76,17 +76,20 @@ class H4RFile
     char m_szH4rFileName[MAX_FILENAME_LENGTH];   // h4r file name
     ui32 m_NbFile;                               // Number of files
     bool *m_pToExtract;                          // Extract file ?
+	ui32 *m_pDataType;                           // File types array
+    
     ui32 *m_pOffset;                             // Offsets array
     ui32 *m_pSize;                               // Sizes array
-    ui32 *m_pDataType;                           // File types array
+	ui32 *m_pUnpSize;                            // Unpacked size
+    ui32 *m_pTime;								 // Creation time
     ui16 *m_pNameSize;                           // Size of the name
     char **m_ppName;                             // File names array
     ui16 *m_pPathSize;                           // Size of the path
     char **m_ppPath;                             // File paths array
-    ui32 *m_pPre1;                               // Pre-datas array
-    ui32 *m_pPre2;
-    ui16 *m_pExtra1;                             // Extra info array
-    ui32 *m_pExtra2;
+    ui16 *m_pPointerSize;                           // Size of the path
+    char **m_ppPointer;                             // File paths array
+    // ui16 *m_pExtra1;                             // 00 ??
+    ui32 *m_pCompr;								 // Compression level
 
   public:
     H4RFile (void);

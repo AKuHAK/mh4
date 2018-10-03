@@ -2,7 +2,7 @@
 | mh4 (version 0.06) |
  --------------------
 
-By Olivier Soares <olivier@etranges-libellules.fr>
+By AKUHAK and Olivier Soares <olivier@etranges-libellules.fr>
 
 
 Download the last release here: http://www.archangelcastle.com or http://www.strategyplanet.com/homm
@@ -28,6 +28,11 @@ This program uses the following librairies:
 
 Special thanks to Gervan Peter who helps me to understand the h4r file format ...
 
++0.98
+
++ v0.96 (2011-10-20)
+Much much much changes
+Many bugs were corrected
 
 + v0.06 (2002-10-20)
 Increase speed

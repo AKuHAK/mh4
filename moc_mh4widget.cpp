@@ -1,7 +1,7 @@
 /****************************************************************************
 ** mh4widget meta object code from reading C++ file 'mh4widget.h'
 **
-** Created: Sun Oct 20 19:32:22 2002
+** Created: Sun Apr 29 13:43:17 2018
 **      by: The Qt MOC ($Id: //depot/qt/main/src/moc/moc.y#178 $)
 **
 ** WARNING! All changes made in this file will be lost!
