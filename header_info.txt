@@ -1,0 +1,24 @@
+Sound files has special header at beginning of file: 19 bytes or 15 bytes according to file type
+Header:
+Sound Type (3 bytes):		00 - raw pcm, 01 - mp3
+Bit-per-sample (1 byte):	10 - 16-bit
+Channels (1 byte):		01 - mono, 02 - stereo
+Sampling rate (4 bytes):			44 AC 00 00 - 44.1kHz,22 56 00 00 - 22.05kHz
+If sound type 00 (raw pcm):
+File size (4 bytes)
+Unknown (2 bytes): 		01 00
+else if sound type 01 (mp3)
+Sample count*4 (4 bytes)
+Unknown (2 bytes): 		01 00
+File size (4 bytes)
+
+01 00 00 10 02 44 AC 00 00 00 B4 AC 02 01 00 E0 1A 3E 00
+01 00 00 10 02 44 AC 00 00 00 FE 5E 09 01 00 E3 A1 D9 00
+00 00 00 10 01 22 56 00 00 00 8A 00 00 01 00
+00 00 00 10 02 44 AC 00 00 7C EC 04 00 01 00
+
+Game maps:
+Special header:
+16 bytes (14 bytes magic)
+01 00 00 00 01 00 00 00 10 27 00 00
+File size (4 bytes)
