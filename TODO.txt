@@ -1,0 +1,6 @@
+- fix h4l
+- add path support
+- add automatic header generation
+- add packed/non packed system support
+- add 3 types of extraction: by type, by path, without path
+- check every header in game, specially for mp3, video etc

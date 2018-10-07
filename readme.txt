@@ -1,5 +1,5 @@
  --------------------
-| mh4 (version 0.06) |
+| mh4 (version 0.98) |
  --------------------
 
 By AKUHAK and Olivier Soares <olivier@etranges-libellules.fr>
@@ -15,15 +15,11 @@ You can edit it if you want (ascii file) but be carefull ...
 If you want to build your own h4r file, extract all the files from an original h4r file, modify the files you want and rebuild the h4r file from the h4l file.
 Be carefull, SAVE the original h4r file before any manipulation !!!
 
-
-To read data files you can use:
-	- Winamp (http://www.winamp.com) for mp3 (music) files
-	- RAD Video Tools (http://www.radgametools.com) for bink (movie) files
-
-
 This program uses the following librairies:
 	- QT 2.30 for the GUI (http://www.trolltech.com)
 	- zlib 1.14 for the zip/unzip (http://www.winimage.com/zLibDll/unzip.html)
+For compilation you may use microsoft Visual studio 6.0
+Main project file: mh4.dsw
 
 
 Special thanks to Gervan Peter who helps me to understand the h4r file format ...
